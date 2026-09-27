@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOKIDS - El Arcade de las Tablas</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    background: radial-gradient(circle at center, #2d0057 0%, #110022 45%, #050008 100%);
+    color: white;
+    overflow-x: hidden;
+}
+
+/* EFECTO SCANLINE RETRO */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.03) 0px,
+        rgba(255,255,255,0.03) 1px,
+        transparent 1px,
+        transparent 4px
+    );
+    z-index: 10;
+}
+
+/* FONDO ESTRELLADO */
+.stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    box-shadow: 0 0 8px #fff;
+    animation: twinkle 2s infinite alternate;
+}
+
+@keyframes twinkle {
+    from { opacity: 0.2; }
+    to { opacity: 1; }
+}
+
+/* CONTENEDOR PRINCIPAL */
+.container {
+    width: min(1000px, 94%);
+    margin: auto;
+    padding: 30px 0 50px;
+}
+
+/* LOGO */
+.logo {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.logo h1 {
+    font-size: clamp(28px, 6vw, 60px);
+    color: #00ffff;
+    text-shadow:
+        4px 4px 0 #ff00ff,
+        0 0 15px #00ffff,
+        0 0 35px #00ffff;
+    animation: glitch 2s infinite;
+}
+
+.logo p {
+    margin-top: 12px;
+    color: #ffff00;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+@keyframes glitch {
+    0%, 90%, 100% { transform: translate(0); }
+    92% { transform: translate(3px, -2px); }
+    94% { transform: translate(-3px, 2px); }
+}
+
+/* PANEL RETRO */
+.panel {
+    background: rgba(12, 0, 35, 0.94);
+    border: 4px solid #ff00ff;
+    box-shadow:
+        0 0 10px #ff00ff,
+        0 0 30px rgba(255,0,255,0.5),
+        inset 0 0 20px rgba(0,255,255,0.15);
+    padding: 30px;
+    border-radius: 12px;
+}
+
+/* CONTROLES DE MÚSICA Y AUDIO */
+.audio-panel {
+    margin-bottom: 20px;
+    background: #080017;
+    border: 2px solid #00ffff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.audio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 9px;
+    color: #00ffff;
+}
+
+.audio-select, .volume-slider, .file-input {
+    font-family: 'Press Start 2P', monospace;
+    background: #18002e;
+    color: #ffff00;
+    border: 2px solid #ff00ff;
+    padding: 8px;
+    font-size: 9px;
+    outline: none;
+    cursor: pointer;
+}
+
+.file-input {
+    color: white;
+    max-width: 180px;
+}
+
+.volume-slider {
+    width: 110px;
+    accent-color: #ff00ff;
+}
+
+.audio-toggle-btn {
+    padding: 12px 16px;
+    background: #ff0055;
+    color: #ffffff;
+    border: 2px solid #ff0055;
+    font-size: 10px;
+    box-shadow: 0 0 10px #ff0055;
+    cursor: pointer;
+}
+
+.audio-toggle-btn.active {
+    background: #00ff88;
+    color: #000000;
+    border-color: #00ff88;
+    box-shadow: 0 0 12px #00ff88;
+}
+
+/* BOTONES */
+button {
+    font-family: 'Press Start 2P', monospace;
+    cursor: pointer;
+    border: 3px solid white;
+    transition: transform 0.15s, filter 0.15s;
+}
+
+button:hover {
+    transform: scale(1.04);
+    filter: brightness(1.2);
+}
+
+.main-btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    margin: 15px 0 0;
+    color: white;
+    background: linear-gradient(90deg, #ff00cc, #6600ff);
+    border-color: #00ffff;
+    box-shadow: 0 0 15px #ff00cc;
+    font-size: 13px;
+}
+
+/* GRID DE TABLAS */
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.table-btn {
+    padding: 18px 8px;
+    background: #13002b;
+    color: #00ffff;
+    border-color: #00ffff;
+    box-shadow: 0 0 8px #00ffff;
+    font-size: 11px;
+}
+
+.table-btn:hover {
+    background: #00ffff;
+    color: #160020;
+}
+
+/* HUD DEL JUEGO */
+.hud {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.hud-box {
+    border: 2px solid #00ffff;
+    padding: 15px 8px;
+    text-align: center;
+    color: #00ffff;
+    background: #080014;
+    box-shadow: 0 0 10px rgba(0,255,255,0.4);
+    font-size: 9px;
+}
+
+.hud-box span {
+    display: block;
+    margin-top: 10px;
+    color: #ffff00;
+    font-size: 15px;
+}
+
+/* CAJA DE PREGUNTAS */
+.question-box {
+    text-align: center;
+    border: 4px solid #ffff00;
+    background: #12001f;
+    padding: 35px 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 0 20px rgba(255,255,0,0.4);
+}
+
+.question-box small {
+    color: #ff00ff;
+    font-size: 11px;
+}
+
+.question {
+    font-size: clamp(24px, 7vw, 50px);
+    color: white;
+    margin-top: 20px;
+    text-shadow: 0 0 15px white;
+}
+
+/* OPCIONES DE RESPUESTA */
+.answers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.answer {
+    padding: 22px;
+    background: #210044;
+    color: white;
+    border: 3px solid #ff00ff;
+    font-size: 16px;
+    box-shadow: 0 0 12px rgba(255,0,255,0.5);
+}
+
+.answer.correct {
+    background: #00aa55 !important;
+    border-color: #00ff88 !important;
+}
+
+.answer.wrong {
+    background: #aa0033 !important;
+    border-color: #ff0044 !important;
+}
+
+/* MENSAJES */
+.message {
+    text-align: center;
+    min-height: 35px;
+    margin: 20px 0;
+    color: #ffff00;
+    font-size: 12px;
+}
+
+/* VISUALIZADOR DE TABLAS */
+.table-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.table-row {
+    padding: 12px;
+    text-align: center;
+    background: #18002e;
+    border: 2px solid #6600ff;
+    color: #fff;
+    font-size: 11px;
+}
+
+/* RESULTADO */
+.result { text-align: center; }
+
+.result h2 {
+    font-size: 26px;
+    color: #ffff00;
+    text-shadow: 0 0 15px #ffff00;
+    margin-bottom: 25px;
+}
+
+.final-score {
+    font-size: 45px;
+    color: #00ffff;
+    margin: 20px;
+}
+
+/* CLASE OCULTA */
+.hidden { display: none !important; }
+
+/* FOOTER */
+footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #777;
+    font-size: 9px;
+}
+
+/* ADAPTACIÓN MÓVIL */
+@media(max-width: 700px) {
+    .panel { padding: 18px; }
+    .tables-grid { grid-template-columns: repeat(2, 1fr); }
+    .hud { grid-template-columns: repeat(2, 1fr); }
+    .answers { grid-template-columns: 1fr; }
+    .table-list { grid-template-columns: 1fr; }
+    .audio-panel { flex-direction: column; align-items: stretch; }
+    .file-input { max-width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+
+    <div class="logo">
+        <h1>COOKIDS</h1>
+        <p>★ EL ARCADE DE LAS TABLAS ★</p>
+    </div>
+
+    <!-- PANEL DE CONTROL DE MÚSICA -->
+    <div class="audio-panel">
+        <button class="audio-toggle-btn" id="audioToggle" onclick="toggleAudio()">▶️ MÚSICA: OFF</button>
+        
+        <div class="audio-group">
+            <label for="musicType">ESTILO ARCADE (SINTETIZADO):</label>
+            <select id="musicType" class="audio-select" onchange="changeMusicType()">
+                <option value="arcade">1. 8-Bit Arcade Loop</option>
+                <option value="synth">2. Synthwave Retro</option>
+                <option value="chill">3. Chill Chiptune</option>
+            </select>
+        </div>
+
+        <div class="audio-group">
+            <label>O CARGA TU MP3:</label>
+            <input type="file" id="localAudio" class="file-input" accept="audio/*" onchange="loadLocalAudio(event)">
+        </div>
+
+        <div class="audio-group">
+            <label for="volumeSlider">VOLUMEN: <span id="volVal">100%</span></label>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" oninput="updateVolume(this.value)">
+        </div>
+    </div>
+
+    <!-- MENÚ DE INICIO -->
+    <section id="menu" class="panel">
+
+        <h2 style="text-align:center; color:#ff00ff; font-size: 15px; margin-bottom: 10px;">
+            SELECCIONA UNA TABLA PARA JUGAR
+        </h2>
+
+        <div class="tables-grid">
+            <button class="table-btn" onclick="selectTable(1)">TABLA 1</button>
+            <button class="table-btn" onclick="selectTable(2)">TABLA 2</button>
+            <button class="table-btn" onclick="selectTable(3)">TABLA 3</button>
+            <button class="table-btn" onclick="selectTable(4)">TABLA 4</button>
+            <button class="table-btn" onclick="selectTable(5)">TABLA 5</button>
+            <button class="table-btn" onclick="selectTable(6)">TABLA 6</button>
+            <button class="table-btn" onclick="selectTable(7)">TABLA 7</button>
+            <button class="table-btn" onclick="selectTable(8)">TABLA 8</button>
+            <button class="table-btn" onclick="selectTable(9)">TABLA 9</button>
+            <button class="table-btn" onclick="selectTable(10)">TABLA 10</button>
+        </div>
+
+        <button class="main-btn" onclick="selectTable(0)">
+            🎮 MODO TODAS LAS TABLAS
+        </button>
+
+        <button class="main-btn" onclick="showTables()">
+            📚 VER TABLAS DE MULTIPLICAR
+        </button>
+
+    </section>
+
+    <!-- PANTALLA DE JUEGO -->
+    <section id="game" class="panel hidden">
+
+        <div class="hud">
+            <div class="hud-box">
+                PUNTOS
+                <span id="score">0</span>
+            </div>
+            <div class="hud-box">
+                VIDAS
+                <span id="lives">❤️❤️❤️</span>
+            </div>
+            <div class="hud-box">
+                RACHA
+                <span id="streak">0</span>
+            </div>
+            <div class="hud-box">
+                TIEMPO
+                <span id="timer">10</span>
+            </div>
+        </div>
+
+        <div class="question-box">
+            <small id="modeText">TABLA</small>
+            <div class="question" id="question">
+                5 × 5 = ?
+            </div>
+        </div>
+
+        <div class="answers" id="answers"></div>
+
+        <div class="message" id="message"></div>
+
+        <button class="main-btn" onclick="backMenu()">
+            ← VOLVER AL MENÚ
+        </button>
+
+    </section>
+
+    <!-- VER TABLAS -->
+    <section id="tables" class="panel hidden">
+
+        <h2 style="text-align:center; color:#ffff00; font-size:16px; margin-bottom:20px;">
+            📚 TABLAS DEL 1 AL 10
+        </h2>
+
+        <div id="tablesContent"></div>
+
+        <button class="main-btn" onclick="backMenu()">
+            ← VOLVER AL MENÚ
+        </button>
+
+    </section>
+
+    <!-- RESULTADO DEL JUEGO -->
+    <section id="result" class="panel hidden">
+
+        <div class="result">
+            <h2>🏆 GAME OVER 🏆</h2>
+            <p style="font-size: 11px;">PUNTUACIÓN FINAL:</p>
+            <div class="final-score" id="finalScore">0</div>
+            <p id="finalMessage" style="color: #ffff00; font-size: 11px; margin-bottom: 20px;"></p>
+
+            <button class="main-btn" onclick="backMenu()">
+                🎮 JUGAR DE NUEVO
+            </button>
+        </div>
+
+    </section>
+
+    <footer>
+        COOKIDS © RETRO ARCADE EDUCATION
+    </footer>
+
+</div>
+
+<script>
+/* ===================================================
+   SISTEMA DE AUDIO INTEGRADO (SINTETIZADOR + LOCAL)
+=================================================== */
+
+let audioCtx = null;
+let masterGain = null;
+let isPlaying = false;
+let synthTimer = null;
+let bgMusicElement = new Audio();
+bgMusicElement.loop = true;
+
+let isLocalAudio = false;
+let globalVolume = 1.0;
+
+function initAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+// Notas musicales en Hz
+const notes = {
+    C3: 130.81, E3: 164.81, G3: 196.00, B3: 246.94,
+    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+    C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99
+};
+
+const tracks = {
+    arcade: [
+        { note: 'C4', dur: 0.2 }, { note: 'E4', dur: 0.2 }, { note: 'G4', dur: 0.2 }, { note: 'C5', dur: 0.4 },
+        { note: 'G4', dur: 0.2 }, { note: 'E4', dur: 0.2 }, { note: 'A4', dur: 0.2 }, { note: 'C5', dur: 0.4 },
+        { note: 'F4', dur: 0.2 }, { note: 'A4', dur: 0.2 }, { note: 'C5', dur: 0.2 }, { note: 'G4', dur: 0.4 }
+    ],
+    synth: [
+        { note: 'C3', dur: 0.3 }, { note: 'G3', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'D4', dur: 0.3 },
+        { note: 'E4', dur: 0.3 }, { note: 'D4', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'G3', dur: 0.3 }
+    ],
+    chill: [
+        { note: 'E4', dur: 0.4 }, { note: 'G4', dur: 0.4 }, { note: 'B4', dur: 0.4 }, { note: 'A4', dur: 0.4 },
+        { note: 'G4', dur: 0.4 }, { note: 'E4', dur: 0.4 }, { note: 'D4', dur: 0.4 }, { note: 'E4', dur: 0.4 }
+    ]
+};
+
+let currentNoteIdx = 0;
+
+function playSynthLoop() {
+    if (!isPlaying || isLocalAudio) return;
+
+    initAudioContext();
+    const style = document.getElementById("musicType").value;
+    const pattern = tracks[style] || tracks.arcade;
+    const step = pattern[currentNoteIdx];
+
+    if (step && notes[step.note]) {
+        const osc = audioCtx.createOscillator();
+        const noteGain = audioCtx.createGain();
+
+        osc.type = (style === 'synth') ? 'sawtooth' : 'square';
+        osc.frequency.setValueAtTime(notes[step.note], audioCtx.currentTime);
+
+        noteGain.gain.setValueAtTime(0.12 * globalVolume, audioCtx.currentTime);
+        noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + step.dur);
+
+        osc.connect(noteGain);
+        noteGain.connect(masterGain);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + step.dur);
+    }
+
+    currentNoteIdx = (currentNoteIdx + 1) % pattern.length;
+    const nextDur = (step ? step.dur : 0.3) * 1000;
+    synthTimer = setTimeout(playSynthLoop, nextDur);
+}
+
+function stopSynth() {
+    if (synthTimer) {
+        clearTimeout(synthTimer);
+        synthTimer = null;
+    }
+}
+
+function playSoundEffect(type) {
+    try {
+        initAudioContext();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        if (type === 'correct') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3 * globalVolume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3 * globalVolume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+    } catch(e) {
+        console.log("Audio FX error", e);
+    }
+}
+
+function toggleAudio() {
+    initAudioContext();
+    const btn = document.getElementById("audioToggle");
+
+    if (!isPlaying) {
+        isPlaying = true;
+        btn.textContent = "⏸️ MÚSICA: ON";
+        btn.classList.add("active");
+
+        if (isLocalAudio && bgMusicElement.src) {
+            bgMusicElement.play();
+        } else {
+            currentNoteIdx = 0;
+            playSynthLoop();
+        }
+    } else {
+        isPlaying = false;
+        btn.textContent = "▶️ MÚSICA: OFF";
+        btn.classList.remove("active");
+
+        stopSynth();
+        if (isLocalAudio) {
+            bgMusicElement.pause();
+        }
+    }
+}
+
+function changeMusicType() {
+    isLocalAudio = false;
+    bgMusicElement.pause();
+    stopSynth();
+
+    if (isPlaying) {
+        currentNoteIdx = 0;
+        playSynthLoop();
+    }
+}
+
+function loadLocalAudio(event) {
+    const file = event.target.files[0];
+    if (file) {
+        isLocalAudio = true;
+        stopSynth();
+
+        bgMusicElement.src = URL.createObjectURL(file);
+        bgMusicElement.volume = globalVolume;
+
+        const select = document.getElementById("musicType");
+        let customOpt = document.getElementById("customMusicOption");
+
+        if (!customOpt) {
+            customOpt = document.createElement("option");
+            customOpt.id = "customMusicOption";
+            select.appendChild(customOpt);
+        }
+
+        customOpt.value = "custom";
+        customOpt.textContent = "📂 " + file.name.substring(0, 15) + "...";
+        select.value = "custom";
+
+        if (!isPlaying) {
+            toggleAudio();
+        } else {
+            bgMusicElement.play();
+        }
+    }
+}
+
+function updateVolume(val) {
+    document.getElementById("volVal").textContent = val + "%";
+    globalVolume = val / 100;
+    bgMusicElement.volume = globalVolume;
+}
+
+/* ==========================
+   LÓGICA DEL JUEGO
+========================== */
+
+let selectedTable = 0;
+let score = 0;
+let lives = 3;
+let streak = 0;
+let currentAnswer = 0;
+let timer;
+let timeLeft = 10;
+
+// Estrellas animadas en el fondo
+const stars = document.getElementById("stars");
+for(let i = 0; i < 70; i++){
+    const star = document.createElement("div");
+    star.className = "star";
+    star.style.left = Math.random() * 100 + "%";
+    star.style.top = Math.random() * 100 + "%";
+    star.style.animationDelay = Math.random() * 2 + "s";
+    stars.appendChild(star);
+}
+
+function selectTable(table){
+    initAudioContext();
+    selectedTable = table;
+    score = 0;
+    lives = 3;
+    streak = 0;
+
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("tables").classList.add("hidden");
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    updateHUD();
+    nextQuestion();
+}
+
+function nextQuestion(){
+    clearInterval(timer);
+    timeLeft = 10;
+    document.getElementById("timer").textContent = timeLeft;
+
+    let baseTable = selectedTable;
+    if(selectedTable === 0){
+        baseTable = Math.floor(Math.random() * 10) + 1;
+    }
+
+    let multiplier = Math.floor(Math.random() * 10) + 1;
+    currentAnswer = baseTable * multiplier;
+
+    document.getElementById("question").textContent = `${baseTable} × ${multiplier} = ?`;
+    document.getElementById("modeText").textContent = `TABLA DEL ${baseTable}`;
+
+    createAnswers();
+    startTimer();
+}
+
+function createAnswers(){
+    const container = document.getElementById("answers");
+    container.innerHTML = "";
+
+    let answers = [currentAnswer];
+
+    while(answers.length < 4){
+        let randomAns = Math.floor(Math.random() * 100) + 1;
+        if(!answers.includes(randomAns)){
+            answers.push(randomAns);
+        }
+    }
+
+    answers.sort(() => Math.random() - 0.5);
+
+    answers.forEach(answer => {
+        const button = document.createElement("button");
+        button.className = "answer";
+        button.textContent = answer;
+        button.onclick = () => checkAnswer(answer, button);
+        container.appendChild(button);
+    });
+}
+
+function checkAnswer(answer, button){
+    clearInterval(timer);
+    const buttons = document.querySelectorAll(".answer");
+    buttons.forEach(btn => btn.disabled = true);
+
+    if(answer === currentAnswer){
+        playSoundEffect('correct');
+        button.classList.add("correct");
+        score += 100;
+        streak++;
+
+        if(streak >= 3){
+            score += 50;
+        }
+
+        document.getElementById("message").textContent = "★ ¡CORRECTO! +100 ★";
+        updateHUD();
+        setTimeout(nextQuestion, 800);
+    } else {
+        playSoundEffect('wrong');
+        button.classList.add("wrong");
+        lives--;
+        streak = 0;
+
+        document.getElementById("message").textContent = "✖️ RESPUESTA INCORRECTA";
+        updateHUD();
+
+        if(lives <= 0){
+            setTimeout(gameOver, 800);
+        } else {
+            setTimeout(nextQuestion, 1000);
+        }
+    }
+}
+
+function startTimer(){
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = timeLeft;
+
+        if(timeLeft <= 0){
+            clearInterval(timer);
+            playSoundEffect('wrong');
+            lives--;
+            streak = 0;
+
+            document.getElementById("message").textContent = "⏰ ¡TIEMPO AGOTADO!";
+            updateHUD();
+
+            if(lives <= 0){
+                setTimeout(gameOver, 700);
+            } else {
+                setTimeout(nextQuestion, 900);
+            }
+        }
+    }, 1000);
+}
+
+function updateHUD(){
+    document.getElementById("score").textContent = score;
+    document.getElementById("streak").textContent = streak;
+    document.getElementById("lives").textContent = "❤️".repeat(lives);
+}
+
+function gameOver(){
+    clearInterval(timer);
+
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+    document.getElementById("finalScore").textContent = score;
+
+    let message;
+    if(score >= 1500){
+        message = "🔥 ¡LEYENDA DE LAS TABLAS! 🔥";
+    } else if(score >= 800){
+        message = "⭐ ¡MUY BUEN TRABAJO! ⭐";
+    } else if(score >= 400){
+        message = "👍 ¡VAS POR BUEN CAMINO!";
+    } else {
+        message = "💪 ¡SIGUE PRACTICANDO!";
+    }
+
+    document.getElementById("finalMessage").textContent = message;
+}
+
+function showTables(){
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("tables").classList.remove("hidden");
+
+    const content = document.getElementById("tablesContent");
+    content.innerHTML = "";
+
+    for(let table = 1; table <= 10; table++){
+        const box = document.createElement("div");
+        box.style.marginBottom = "20px";
+
+        let html = `<h3 style="color:#00ffff; font-size:12px; margin-bottom:10px; text-align:center;">★ TABLA DEL ${table} ★</h3><div class="table-list">`;
+
+        for(let number = 1; number <= 10; number++){
+            html += `<div class="table-row">${table} × ${number} = ${table * number}</div>`;
+        }
+
+        html += `</div>`;
+        box.innerHTML = html;
+        content.appendChild(box);
+    }
+}
+
+function backMenu(){
+    clearInterval(timer);
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("tables").classList.add("hidden");
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("menu").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
